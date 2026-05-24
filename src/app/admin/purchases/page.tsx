@@ -43,9 +43,9 @@ export default function PurchasesPage() {
   return (
     <div className="p-[10px] md:p-8 w-full">
       <AdminPageHeader
-        title="Retail Purchase History"
-        description="View all retail product acquisitions and stock intake records."
-        stats={{ label: "Total Retail Purchases", value: pagination?.total || 0 }}
+        title="Purchase History"
+        description="View all product acquisitions and stock intake records."
+        stats={{ label: "Total Purchases", value: pagination?.total || 0 }}
       />
 
       {/* Date Range Filter */}

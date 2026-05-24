@@ -174,9 +174,9 @@ export default function ProductsPage() {
   return (
     <div className="p-[10px] md:p-8">
       <AdminPageHeader
-        title="Retail Products"
-        description="View and manage your retail inventory."
-        stats={{ label: "Total Retail", value: products.length }}
+        title="Products"
+        description="View and manage your product inventory."
+        stats={{ label: "Total Products", value: products.length }}
       >
         <button
           onClick={() => {
@@ -327,7 +327,7 @@ export default function ProductsPage() {
             )}
             {!loading && !error && filteredProducts.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No retail products found</p>
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No products found</p>
                 {search && (
                    <button onClick={() => setSearch('')} className="mt-2 text-xs font-bold underline text-gray-500 hover:text-black">Clear search</button>
                 )}

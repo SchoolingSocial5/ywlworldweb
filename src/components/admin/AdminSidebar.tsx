@@ -27,6 +27,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     pathname.startsWith('/admin/settings') ||
     pathname.startsWith('/admin/staff')
   );
+  const [activePath, setActivePath] = useState(pathname);
   const logoSrc = getImageUrl(settings?.logo);
   const { unpaidCount } = useOrderStore();
 
@@ -52,8 +53,11 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
   // Close sidebar on path change (mobile)
   useEffect(() => {
-    onClose();
-  }, [pathname, onClose]);
+    if (pathname !== activePath) {
+      onClose();
+      setActivePath(pathname);
+    }
+  }, [pathname, activePath, onClose]);
 
   return (
     <aside className={`
@@ -124,7 +128,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         {canShowRetail && (
           <Link href="/admin/products" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/products' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-            Retail Products
+            Products
           </Link>
         )}
         {hasAccess('expense') && (

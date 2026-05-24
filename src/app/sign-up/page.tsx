@@ -42,7 +42,7 @@ export default function SignUp() {
       <div className="flex-1 flex items-center justify-center px-[10px] py-6">
         <div className="w-full max-w-4xl flex card shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
           {/* Form Side */}
-          <div className="w-full lg:w-1/2 p-12 lg:p-16 flex flex-col justify-center">
+          <div className="w-full lg:w-1/2 px-[10px] py-12 sm:p-12 lg:p-16 flex flex-col justify-center">
             <h1 className="text-heading mb-2">Create an Account</h1>
             <p className="text-caption text-base mb-8">Join Wink to discover amazing collections.</p>
 
