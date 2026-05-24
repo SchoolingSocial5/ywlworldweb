@@ -50,9 +50,10 @@ export default function Home() {
       .catch(() => { });
   }, [fetchProducts, fetchBanners, fetchPublicBlogs]);
 
-  // Filter by category and price, then sort
+  // Filter by category, color, and price, then sort
   const filtered = products.filter((p) => {
     if (selectedCategory !== "All Products" && p.category?.toLowerCase() !== selectedCategory.toLowerCase()) return false;
+    if (selectedColors.length > 0 && (!p.color || !selectedColors.includes(p.color.trim().toLowerCase()))) return false;
     const price = parseFloat(p.price);
     if (!isNaN(price) && price > priceRange[1]) return false;
     return true;

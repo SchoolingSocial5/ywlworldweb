@@ -119,7 +119,42 @@ export default function Sidebar({
         </ul>
       </div>
 
-
+      {/* Colors */}
+      {uniqueColors.length > 0 && (
+        <div className="mb-10">
+          <h3 className="font-bold text-sm tracking-widest uppercase mb-4 text-gray-900 dark:text-gray-100">Colors</h3>
+          <div className="flex flex-wrap gap-2.5">
+            {uniqueColors.map((color) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => toggleColor(color)}
+                className={`w-7 h-7 rounded-full border relative transition-all active:scale-90 cursor-pointer ${
+                  selectedColors.includes(color)
+                    ? "border-black dark:border-white ring-2 ring-black dark:ring-white ring-offset-2 dark:ring-offset-neutral-900"
+                    : "border-gray-200 dark:border-neutral-700 hover:scale-105"
+                }`}
+                style={{ backgroundColor: color }}
+                title={color}
+              >
+                {selectedColors.includes(color) && (
+                  <svg
+                    className="absolute inset-0 m-auto text-white dark:text-black mix-blend-difference"
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  >
+                    <polyline points="20 6 9 17 5 12" />
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Price Range */}
       <div>

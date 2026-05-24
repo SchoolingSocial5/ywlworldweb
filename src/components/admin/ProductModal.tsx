@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Product } from "@/store/useProductStore";
 import { Category } from "@/store/useCategoryStore";
+import { getImageUrl } from "@/utils/image";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 import "react-quill-new/dist/quill.snow.css";
@@ -25,7 +26,10 @@ interface ProductModalProps {
   categories: Category[];
   onSubmit: (e: React.FormEvent) => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  imagePreview: string | null;
+  existingImages: string[];
+  removeExistingImage: (url: string) => void;
+  newImagePreviews: string[];
+  removeNewImage: (index: number) => void;
   submitting?: boolean;
   onPurchase?: (quantity: string, costPrice: string) => Promise<void>;
 }
@@ -116,7 +120,10 @@ export default function ProductModal({
   categories,
   onSubmit,
   handleImageChange,
-  imagePreview,
+  existingImages,
+  removeExistingImage,
+  newImagePreviews,
+  removeNewImage,
   submitting = false,
   onPurchase,
 }: ProductModalProps) {
@@ -206,38 +213,77 @@ export default function ProductModal({
             </div>
           </div>
 
-          {/* Product Image */}
+          {/* Product Images */}
           <div className="flex flex-col gap-2">
-            <label className={labelCls}>Product Image</label>
-            <div className="flex items-center gap-4">
+            <label className={labelCls}>Product Images</label>
+            <div className="flex flex-wrap gap-3 items-center">
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 className="hidden"
-                id="product-image"
+                id="product-images"
               />
+              
+              {/* Existing Images */}
+              {existingImages.map((url, i) => (
+                <div key={`existing-${i}`} className="w-16 h-16 rounded-xl border border-gray-200 dark:border-neutral-700 relative overflow-hidden flex-shrink-0 group">
+                  <img src={getImageUrl(url) || ""} alt="Product" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeExistingImage(url)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md z-10"
+                    title="Remove image"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                  {i === 0 && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[8px] font-bold py-0.5 text-center uppercase tracking-wider">Cover</span>
+                  )}
+                </div>
+              ))}
+
+              {/* New Images */}
+              {newImagePreviews.map((preview, i) => (
+                <div key={`new-${i}`} className="w-16 h-16 rounded-xl border border-gray-200 dark:border-neutral-700 relative overflow-hidden flex-shrink-0 group">
+                  <img src={preview} alt="New Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeNewImage(i)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md z-10"
+                    title="Remove image"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                  {existingImages.length === 0 && i === 0 && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[8px] font-bold py-0.5 text-center uppercase tracking-wider">Cover</span>
+                  )}
+                </div>
+              ))}
+
+              {/* Add Button */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all cursor-pointer overflow-hidden flex-shrink-0 relative"
+                className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all cursor-pointer flex-shrink-0 flex items-center justify-center relative"
+                title="Add Image"
               >
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <svg className="text-gray-400 dark:text-gray-500 absolute inset-0 m-auto" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                )}
+                <svg className="text-gray-400 dark:text-gray-500" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
               </button>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                <p className="font-bold text-gray-700 dark:text-gray-300">Upload Product Image</p>
-                <p>Click box to upload new product photo.</p>
-              </div>
             </div>
+            <p className="text-[10px] text-gray-400 mt-1">Upload one or multiple photos. The first image will be used as the main display cover.</p>
           </div>
 
           {/* Description */}

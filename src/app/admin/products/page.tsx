@@ -32,9 +32,10 @@ export default function ProductsPage() {
     color: "#000000",
     quantity: "0",
     description: "",
-    image: null as File | null
   });
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning"; visible: boolean }>({
     message: "",
     type: "success",
@@ -77,13 +78,10 @@ export default function ProductsPage() {
       color: product.color,
       quantity: product.quantity.toString(),
       description: product.description || "",
-      image: null
     });
-    if (product.image_url) {
-      setImagePreview(getImageUrl(product.image_url));
-    } else {
-      setImagePreview(null);
-    }
+    setExistingImages(product.image_urls || (product.image_url ? [product.image_url] : []));
+    setNewImages([]);
+    setNewImagePreviews([]);
     setIsModalOpen(true);
   };
 
@@ -106,11 +104,24 @@ export default function ProductsPage() {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setNewProduct({ ...newProduct, image: file });
-      setImagePreview(URL.createObjectURL(file));
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setNewImages(prev => [...prev, ...filesArray]);
+      const previews = filesArray.map(file => URL.createObjectURL(file));
+      setNewImagePreviews(prev => [...prev, ...previews]);
     }
+  };
+
+  const removeExistingImage = (url: string) => {
+    setExistingImages(prev => prev.filter(img => img !== url));
+  };
+
+  const removeNewImage = (index: number) => {
+    setNewImages(prev => prev.filter((_, i) => i !== index));
+    if (newImagePreviews[index]) {
+      URL.revokeObjectURL(newImagePreviews[index]);
+    }
+    setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,12 +136,14 @@ export default function ProductsPage() {
     formData.append("color", newProduct.color);
     formData.append("description", newProduct.description || "");
     formData.append("quantity", newProduct.quantity);
-    if (newProduct.image) {
-      formData.append("image", newProduct.image);
-    }
+
+    newImages.forEach((image) => {
+      formData.append("images", image);
+    });
 
     if (editingProduct) {
       formData.append("_method", "PUT");
+      formData.append("existing_images", JSON.stringify(existingImages));
     }
 
     setSubmitting(true);
@@ -143,8 +156,10 @@ export default function ProductsPage() {
 
       setIsModalOpen(false);
       setEditingProduct(null);
-      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", image: null });
-      setImagePreview(null);
+      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "" });
+      setNewImages([]);
+      setNewImagePreviews([]);
+      setExistingImages([]);
       showToast(editingProduct ? "Product updated successfully" : "Product saved successfully", "success");
     } catch (err: any) {
       showToast(err?.message || "Error saving product", "error");
@@ -181,8 +196,10 @@ export default function ProductsPage() {
         <button
           onClick={() => {
             setEditingProduct(null);
-            setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", image: null });
-            setImagePreview(null);
+            setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "" });
+            setNewImages([]);
+            setNewImagePreviews([]);
+            setExistingImages([]);
             setIsModalOpen(true);
           }}
           className="bg-black text-white px-4 py-2 md:px-6 md:py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
@@ -263,7 +280,6 @@ export default function ProductsPage() {
                         </div>
                         <div>
                           <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{product.name}</p>
-                          <p className="text-xs text-gray-500">ID: #{product.id}</p>
                         </div>
                       </div>
                     </td>
@@ -415,7 +431,10 @@ export default function ProductsPage() {
         onSubmit={handleSubmit}
         onPurchase={handlePurchase}
         handleImageChange={handleImageChange}
-        imagePreview={imagePreview}
+        existingImages={existingImages}
+        removeExistingImage={removeExistingImage}
+        newImagePreviews={newImagePreviews}
+        removeNewImage={removeNewImage}
         submitting={submitting}
       />
 

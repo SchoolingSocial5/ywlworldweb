@@ -16,23 +16,63 @@ interface ProductCardProps {
   color: string;
   quantity: number;
   image_url?: string;
+  image_urls?: string[];
   onImageClick?: () => void;
 }
 
-export default function ProductCard({ id, name, category, price, color, quantity, image_url, onImageClick }: ProductCardProps) {
+export default function ProductCard({ id, name, category, price, color, quantity, image_url, image_urls, onImageClick }: ProductCardProps) {
   const { cart, addToCart, removeFromCart, updateQuantity } = useCart();
   const { settings } = useSettings();
   const { hydrated, hydrate, toggle, isWishlisted } = useWishlistStore();
   const [imgError, setImgError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const urls = image_urls && image_urls.length > 0 ? image_urls : (image_url ? [image_url] : []);
 
   useEffect(() => {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
+  useEffect(() => {
+    if (isHovered && urls.length > 1) {
+      const interval = setInterval(() => {
+        setActiveIndex((prev) => (prev + 1) % urls.length);
+      }, 1500);
+      return () => clearInterval(interval);
+    } else {
+      setActiveIndex(0);
+    }
+  }, [isHovered, urls.length]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      setActiveIndex((prev) => (prev + 1) % urls.length);
+    } else if (isRightSwipe) {
+      setActiveIndex((prev) => (prev - 1 + urls.length) % urls.length);
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
   const cartItem = cart.find(item => item.id === id);
   const isInCart = !!cartItem;
-  const resolvedImg = getImageUrl(image_url);
-  const showImage = resolvedImg && !imgError;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -56,7 +96,12 @@ export default function ProductCard({ id, name, category, price, color, quantity
   };
 
   return (
-    <Link href={`/products/${id}`} className="group flex flex-col transition-colors duration-300">
+    <Link 
+      href={`/products/${id}`} 
+      className="group flex flex-col transition-colors duration-300"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Image container */}
       <div 
         onClick={(e) => {
@@ -86,16 +131,42 @@ export default function ProductCard({ id, name, category, price, color, quantity
           )}
         </button>
 
-        {/* Product image */}
-        {showImage ? (
-          <img
-            src={resolvedImg}
-            alt={name}
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-            onError={() => setImgError(true)}
-          />
+        {/* Product images carousel */}
+        {urls.length > 0 && !imgError ? (
+          <div 
+            className="absolute inset-0 w-full h-full flex transition-transform duration-500 ease-out z-0"
+            style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {urls.map((url, i) => (
+              <div key={i} className="w-full h-full flex-shrink-0 relative">
+                <img
+                  src={getImageUrl(url) || ""}
+                  alt={`${name} ${i + 1}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-750 ease-out"
+                  onError={() => setImgError(true)}
+                />
+              </div>
+            ))}
+          </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-100 dark:from-neutral-800 dark:to-neutral-700 group-hover:scale-105 transition-transform duration-700 ease-out" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-100 dark:from-neutral-800 dark:to-neutral-700 group-hover:scale-105 transition-transform duration-750 ease-out" />
+        )}
+
+        {/* Carousel indicator dots */}
+        {urls.length > 1 && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1 bg-black/35 backdrop-blur px-2 py-1 rounded-full pointer-events-none">
+            {urls.map((_, i) => (
+              <div
+                key={i}
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                  i === activeIndex ? "bg-white w-3" : "bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
         )}
 
         {/* Mobile: price overlay at bottom of image */}
