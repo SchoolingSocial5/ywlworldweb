@@ -27,6 +27,10 @@ export default function ProductDetailPage() {
   const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
   const [previewProducts, setPreviewProducts] = useState<Product[]>([]);
 
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
   useEffect(() => {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
@@ -35,6 +39,7 @@ export default function ProductDetailPage() {
     const load = async () => {
       setLoading(true);
       setImgError(false);
+      setActiveImgIndex(0);
       
       const data = await fetchProductById(id);
       if (data) {
@@ -71,8 +76,35 @@ export default function ProductDetailPage() {
     .filter((p) => p.category === product?.category && p.id !== product?.id)
     .slice(0, 4);
 
-  const resolvedImg = getImageUrl(product?.image_url);
+  const urls = product?.image_urls && product.image_urls.length > 0
+    ? product.image_urls
+    : (product?.image_url ? [product.image_url] : []);
+
+  const resolvedImg = getImageUrl(urls[activeImgIndex] || product?.image_url);
   const showImage = resolvedImg && !imgError;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && urls.length > 1) {
+      setActiveImgIndex((prev) => (prev + 1) % urls.length);
+    } else if (isRightSwipe && urls.length > 1) {
+      setActiveImgIndex((prev) => (prev - 1 + urls.length) % urls.length);
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   if (loading) {
     return (
@@ -127,40 +159,94 @@ export default function ProductDetailPage() {
 
         {/* Main product area */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 mb-16 md:mb-24">
-          {/* Image */}
-          <div 
-            onClick={() => {
-              if (product) {
-                setPreviewProducts([product]);
-                setPreviewInitialIndex(0);
-                setIsPreviewOpen(true);
-              }
-            }}
-            className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 dark:bg-neutral-800 shadow-sm cursor-pointer group"
-          >
-            <button
-              onClick={(e) => { e.stopPropagation(); toggle(product.id); }}
-              className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-neutral-900/80 backdrop-blur shadow-sm hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+          {/* Image Gallery Column */}
+          <div className="flex flex-col gap-4">
+            {/* Main Image Slider */}
+            <div 
+              onClick={() => {
+                if (product) {
+                  setPreviewProducts([product]);
+                  setPreviewInitialIndex(0);
+                  setIsPreviewOpen(true);
+                }
+              }}
+              className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 dark:bg-neutral-800 shadow-sm cursor-pointer group"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
-              {isWishlisted(product.id) ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="2">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggle(product.id); }}
+                className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-neutral-900/80 backdrop-blur shadow-sm hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+              >
+                {isWishlisted(product.id) ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500 dark:text-gray-300">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                )}
+              </button>
+
+              {urls.length > 0 && !imgError ? (
+                <div 
+                  className="absolute inset-0 w-full h-full flex transition-transform duration-500 ease-out z-0"
+                  style={{ transform: `translateX(-${activeImgIndex * 100}%)` }}
+                >
+                  {urls.map((url, i) => (
+                    <div key={i} className="w-full h-full flex-shrink-0 relative">
+                      <img
+                        src={getImageUrl(url) || ""}
+                        alt={`${product.name} ${i + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-750 ease-out"
+                        onError={() => setImgError(true)}
+                      />
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500 dark:text-gray-300">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
+                <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-100 dark:from-neutral-800 dark:to-neutral-700" />
               )}
-            </button>
-            {showImage ? (
-              <img
-                src={resolvedImg}
-                alt={product.name}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                onError={() => setImgError(true)}
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-100 dark:from-neutral-800 dark:to-neutral-700 hover:scale-105 transition-transform duration-700" />
+
+              {/* Mobile Indicator Dots */}
+              {urls.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-1.5 bg-black/35 backdrop-blur px-2.5 py-1.5 rounded-full md:hidden">
+                  {urls.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        i === activeImgIndex ? "bg-white w-4" : "bg-white/50"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop / Interactive Thumbnail Grid */}
+            {urls.length > 1 && (
+              <div className="grid grid-cols-5 gap-3 pt-2">
+                {urls.map((url, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImgIndex(i)}
+                    onMouseEnter={() => setActiveImgIndex(i)}
+                    className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-100 dark:bg-neutral-800 border-2 transition-all duration-300 cursor-pointer ${
+                      i === activeImgIndex 
+                        ? "border-black dark:border-white scale-[1.03] shadow-md" 
+                        : "border-transparent opacity-60 hover:opacity-100 hover:scale-[1.02]"
+                    }`}
+                  >
+                    <img
+                      src={getImageUrl(url) || ""}
+                      alt={`${product.name} Thumbnail ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 

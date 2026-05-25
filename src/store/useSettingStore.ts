@@ -15,6 +15,8 @@ export interface Setting {
   favicon?: string;
   currency_symbol: string;
   show_blog: boolean;
+  use_dynamic_currency?: boolean;
+  default_country?: string;
 }
 
 interface SettingState {

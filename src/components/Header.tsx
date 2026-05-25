@@ -8,6 +8,8 @@ import { useSettings } from "@/context/SettingsContext";
 import { useProductStore, Product } from "@/store/useProductStore";
 import { getImageUrl } from "@/utils/image";
 import ThemeToggle from "./ThemeToggle";
+import { formatPrice } from "@/utils/format";
+import { useCurrencyStore, IP_COUNTRY_MAPPINGS } from "@/store/useCurrencyStore";
 
 export default function Header() {
   const { totalItems } = useCart();
@@ -21,6 +23,24 @@ export default function Header() {
   const headerRef = useRef<HTMLElement>(null);
 
   const logoSrc = getImageUrl(settings?.logo);
+
+  const { 
+    activeCurrency, activeSymbol, activeFlag, 
+    setCurrencyManual, initialized 
+  } = useCurrencyStore();
+  const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
+  const currencyRef = useRef<HTMLDivElement>(null);
+
+  // Close currency dropdown on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (currencyRef.current && !currencyRef.current.contains(e.target as Node)) {
+        setIsCurrencyOpen(false);
+      }
+    };
+    if (isCurrencyOpen) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [isCurrencyOpen]);
 
   const navLinks = [
     { name: 'About', href: '/about' },
@@ -125,7 +145,7 @@ export default function Header() {
                       <p className="text-xs text-gray-400 capitalize">{p.category}</p>
                     </div>
                     <span className="text-sm font-black text-gray-900 dark:text-gray-100 flex-shrink-0">
-                      {settings?.currency_symbol || "₦"}{Number(p.price).toLocaleString()}
+                      {formatPrice(p.price)}
                     </span>
                   </Link>
                 ))}
@@ -169,7 +189,69 @@ export default function Header() {
           </button>
 
           {/* Theme + Cart (hidden on mobile when search open) */}
-          <div className={`flex items-center gap-2 ${isSearchOpen ? 'hidden md:flex' : 'flex'}`}>
+          <div className={`flex items-center gap-2.5 ${isSearchOpen ? 'hidden md:flex' : 'flex'}`}>
+            {/* Local Currency Selector */}
+            {initialized && (
+              <div ref={currencyRef} className="relative">
+                {settings?.use_dynamic_currency !== false ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full transition-all cursor-pointer border border-gray-100 dark:border-neutral-800"
+                    title="Change Currency / Country"
+                  >
+                    <img src={activeFlag} alt="" className="w-4 h-3.5 object-cover rounded-sm shadow-sm" />
+                    <span className="text-[10px] font-black tracking-wider uppercase text-gray-700 dark:text-gray-300">
+                      {activeCurrency} ({activeSymbol})
+                    </span>
+                  </button>
+                ) : (
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-100 dark:border-neutral-800"
+                    title="Store Base Currency"
+                  >
+                    <img src={activeFlag} alt="" className="w-4 h-3.5 object-cover rounded-sm shadow-sm" />
+                    <span className="text-[10px] font-black tracking-wider uppercase text-gray-700 dark:text-gray-300">
+                      {activeCurrency} ({activeSymbol})
+                    </span>
+                  </div>
+                )}
+
+                {settings?.use_dynamic_currency !== false && isCurrencyOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="px-4 py-2 border-b border-gray-50 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Select Currency</span>
+                    </div>
+                    <div className="py-1 max-h-56 overflow-y-auto scrollbar-thin">
+                      {IP_COUNTRY_MAPPINGS.map((mapping) => (
+                        <button
+                          key={mapping.currency}
+                          type="button"
+                          onClick={() => {
+                            setCurrencyManual(mapping.currency);
+                            setIsCurrencyOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-3 ${
+                            activeCurrency === mapping.currency ? "bg-gray-50 dark:bg-neutral-800 text-black dark:text-white" : "text-gray-600 dark:text-gray-400"
+                          }`}
+                        >
+                          <img src={mapping.flagUrl} alt="" className="w-4 h-3.5 object-cover rounded-sm shadow-sm" />
+                          <div className="flex-1 truncate">
+                            <p className="font-bold text-[11px] leading-none">{mapping.country}</p>
+                            <p className="text-[9px] text-gray-400 font-bold mt-0.5">{mapping.currency} ({mapping.symbol})</p>
+                          </div>
+                          {activeCurrency === mapping.currency && (
+                            <svg className="text-black dark:text-white" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                              <polyline points="20 6 9 17 5 12" />
+                            </svg>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <ThemeToggle />
             <Link href="/checkout" className="relative p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full transition-colors group text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover:scale-110 transition-transform"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -233,7 +315,7 @@ export default function Header() {
                     <p className="text-xs text-gray-400 capitalize">{p.category}</p>
                   </div>
                   <span className="text-sm font-black text-gray-900 dark:text-gray-100 flex-shrink-0">
-                    {settings?.currency_symbol || "₦"}{Number(p.price).toLocaleString()}
+                    {formatPrice(p.price)}
                   </span>
                 </Link>
               ))}
