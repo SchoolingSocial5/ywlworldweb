@@ -7,6 +7,16 @@ import { useSettings } from '@/context/SettingsContext';
 import { useSocialMediaStore } from '@/store/useSocialMediaStore';
 import { getImageUrl } from '@/utils/image';
 
+const getCompanyInitials = (name?: string) => {
+  if (!name) return "Store";
+  const initials = name
+    .split(/\s+/)
+    .map(word => word.charAt(0))
+    .join("")
+    .toUpperCase();
+  return initials || "Store";
+};
+
 export default function Footer() {
   const pathname = usePathname();
   const { settings, loading: settingsLoading } = useSettings();
@@ -46,7 +56,9 @@ export default function Footer() {
               ) : logoSrc ? (
                 <img src={logoSrc} alt={companyName} className="h-10 max-w-[140px] w-auto object-contain dark:invert transition-transform group-hover:scale-105" />
               ) : (
-                <span className="text-xl font-black uppercase tracking-tight">{companyName}</span>
+                <span className="text-xl font-black tracking-widest text-black dark:text-white uppercase bg-gray-100 dark:bg-neutral-850 px-3.5 py-1.5 rounded-xl border border-gray-200/50 dark:border-neutral-800/50 transition-colors">
+                  {getCompanyInitials(companyName)}
+                </span>
               )}
             </Link>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400 max-w-xs text-center md:text-left">

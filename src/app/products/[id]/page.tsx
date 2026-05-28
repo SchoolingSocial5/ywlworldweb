@@ -10,6 +10,7 @@ import { useProductStore, Product } from "@/store/useProductStore";
 import { useCart } from "@/context/CartContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useWishlistStore } from "@/store/useWishlistStore";
+import { useCurrencyStore } from "@/store/useCurrencyStore";
 import { formatPrice } from "@/utils/format";
 import { getImageUrl } from "@/utils/image";
 
@@ -19,6 +20,7 @@ export default function ProductDetailPage() {
   const { addToCart, cart, updateQuantity, removeFromCart } = useCart();
   const { settings } = useSettings();
   const { hydrated, hydrate, toggle, isWishlisted } = useWishlistStore();
+  const activeCurrency = useCurrencyStore(state => state.activeCurrency);
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -251,7 +253,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Info */}
-          <div className="flex flex-col py-2">
+          <div className="flex flex-col py-2 min-w-0">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-3 capitalize">{product.category}</p>
             <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-gray-900 dark:text-gray-100 leading-tight mb-4">
               {product.name}
@@ -274,10 +276,18 @@ export default function ProductDetailPage() {
 
             {/* Description */}
             {product.description && (
-              <div className="mb-6">
+              <div className="mb-6 w-full max-w-full">
                 <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Description</p>
+                <style dangerouslySetInnerHTML={{ __html: `
+                  .product-description-content * {
+                    white-space: pre-wrap !important;
+                    word-break: break-word !important;
+                    overflow-wrap: break-word !important;
+                    max-width: 100% !important;
+                  }
+                `}} />
                 <div
-                  className="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:dark:text-gray-100 [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:dark:text-gray-100"
+                  className="product-description-content prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:dark:text-gray-100 [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:dark:text-gray-100 [&_img]:max-w-full [&_img]:h-auto [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block [&_iframe]:max-w-full [&_video]:max-w-full"
                   dangerouslySetInnerHTML={{ __html: product.description }}
                 />
               </div>

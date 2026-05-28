@@ -2,6 +2,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useCategoryStore } from "@/store/useCategoryStore";
 import { useSettings } from "@/context/SettingsContext";
+import { useCurrencyStore } from "@/store/useCurrencyStore";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -32,7 +33,8 @@ export default function Sidebar({
 }: SidebarProps) {
   const { categories, fetchCategories } = useCategoryStore();
   const { settings } = useSettings();
-  const currency = settings?.currency_symbol || "$";
+  const activeSymbol = useCurrencyStore(state => state.activeSymbol);
+  const currency = activeSymbol;
 
   useEffect(() => {
     fetchCategories();

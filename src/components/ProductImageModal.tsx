@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useSettings } from "@/context/SettingsContext";
+import { useCurrencyStore } from "@/store/useCurrencyStore";
 import { formatPrice } from "@/utils/format";
 import { getImageUrl } from "@/utils/image";
 
@@ -27,6 +28,7 @@ export default function ProductImageModal({ isOpen, onClose, products, initialIn
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const { cart, addToCart, removeFromCart, updateQuantity } = useCart();
   const { settings } = useSettings();
+  const activeCurrency = useCurrencyStore(state => state.activeCurrency);
 
   useEffect(() => {
     setCurrentIndex(initialIndex);

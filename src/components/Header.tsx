@@ -11,6 +11,16 @@ import ThemeToggle from "./ThemeToggle";
 import { formatPrice } from "@/utils/format";
 import { useCurrencyStore, IP_COUNTRY_MAPPINGS } from "@/store/useCurrencyStore";
 
+const getCompanyInitials = (name?: string) => {
+  if (!name) return "Store";
+  const initials = name
+    .split(/\s+/)
+    .map(word => word.charAt(0))
+    .join("")
+    .toUpperCase();
+  return initials || "Store";
+};
+
 export default function Header() {
   const { totalItems } = useCart();
   const { user, logout } = useAuth();
@@ -78,7 +88,8 @@ export default function Header() {
     : [];
 
   return (
-    <header ref={headerRef} className="sticky top-0 z-50 w-full bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border-b border-gray-100 dark:border-neutral-800 transition-colors duration-300">
+    <>
+      <header ref={headerRef} className="sticky top-0 z-50 w-full bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border-b border-gray-100 dark:border-neutral-800 transition-colors duration-300">
       <div className="max-w-[1400px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
 
         {/* Logo - Left */}
@@ -88,7 +99,9 @@ export default function Header() {
           ) : logoSrc ? (
             <img src={logoSrc} alt={settings?.company_name || "Logo"} className="h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105" />
           ) : (
-            <span className="text-xl font-black uppercase tracking-tight">{settings?.company_name || "Store"}</span>
+            <span className="text-xl font-black tracking-widest text-black dark:text-white uppercase bg-gray-100 dark:bg-neutral-800 px-3.5 py-1.5 rounded-xl border border-gray-200/50 dark:border-neutral-700/50 transition-colors">
+              {getCompanyInitials(settings?.company_name)}
+            </span>
           )}
         </Link>
 
@@ -253,14 +266,6 @@ export default function Header() {
               </div>
             )}
             <ThemeToggle />
-            <Link href="/checkout" className="relative p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full transition-colors group text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover:scale-110 transition-transform"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full scale-90 border-2 border-white dark:border-neutral-900">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
           </div>
 
           {/* Hamburger (mobile) */}
@@ -373,5 +378,32 @@ export default function Header() {
         </div>
       )}
     </header>
-  );
+
+    {/* Scoped Floating Cart Icon at Bottom Right - Placed outside of header to escape backdrop-filter positioning context */}
+    {totalItems > 0 && (
+      <Link
+        href="/checkout"
+        className="fixed bottom-6 right-6 z-[9999] w-14 h-14 bg-white dark:bg-neutral-900 border border-gray-150 dark:border-neutral-800 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group cursor-pointer"
+        title="Go to Checkout"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          className="text-black dark:text-white group-hover:rotate-6 transition-transform"
+        >
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+        <span className="absolute -top-1 -right-1 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full scale-90 border-2 border-white dark:border-neutral-900 transition-transform animate-in zoom-in duration-300">
+          {totalItems}
+        </span>
+      </Link>
+    )}
+  </>
+);
 }

@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import PaymentConfirmModal from '@/components/PaymentConfirmModal';
 import { useOrderStore } from '@/store/useOrderStore';
 import { useSettings } from '@/context/SettingsContext';
+import { useCurrencyStore } from '@/store/useCurrencyStore';
 import { formatPrice } from '@/utils/format';
 import { getImageUrl } from '@/utils/image';
 
@@ -24,6 +25,7 @@ export default function CheckoutPage() {
   const { cart, getCartTotal, clearCart, updateQuantity } = useCart();
   const { user, login } = useAuth();
   const { settings: globalSettings, refreshSettings: fetchSettings } = useSettings();
+  const activeCurrency = useCurrencyStore(state => state.activeCurrency);
   const { createOrder: createRetailOrder, loading: retailLoading, error: retailError } = useOrderStore();
 
   const submitting = retailLoading;
@@ -49,7 +51,7 @@ export default function CheckoutPage() {
   });
 
   const subtotal = getCartTotal();
-  const shipping = subtotal > 500 ? 0 : 25;
+  const shipping = subtotal === 0 ? 0 : (subtotal > 500 ? 0 : 25);
   const total = subtotal + shipping;
 
   useEffect(() => {

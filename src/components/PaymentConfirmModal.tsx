@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useSettings } from "@/context/SettingsContext";
+import { useCurrencyStore } from "@/store/useCurrencyStore";
 import { formatPrice } from "@/utils/format";
 
 interface Settings {
@@ -29,6 +30,7 @@ export default function PaymentConfirmModal({
 }: PaymentConfirmModalProps) {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const { settings: globalSettings } = useSettings();
+  const activeCurrency = useCurrencyStore(state => state.activeCurrency);
 
   const handleConfirm = () => {
     if (receiptFile) {

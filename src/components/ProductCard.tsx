@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useWishlistStore } from "@/store/useWishlistStore";
+import { useCurrencyStore } from "@/store/useCurrencyStore";
 import { formatPrice } from "@/utils/format";
 import { getImageUrl } from "@/utils/image";
 
@@ -24,6 +25,7 @@ export default function ProductCard({ id, name, category, price, color, quantity
   const { cart, addToCart, removeFromCart, updateQuantity } = useCart();
   const { settings } = useSettings();
   const { hydrated, hydrate, toggle, isWishlisted } = useWishlistStore();
+  const activeCurrency = useCurrencyStore(state => state.activeCurrency);
   const [imgError, setImgError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
