@@ -96,8 +96,15 @@ export default function Header() {
         <Link href="/" className="flex-shrink-0 group">
           {settingsLoading ? (
             <div className="h-8 w-24 bg-gray-100 dark:bg-neutral-800 animate-pulse rounded-lg" />
-          ) : logoSrc ? (
-            <img src={logoSrc} alt={settings?.company_name || "Logo"} className="h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105" />
+          ) : (settings?.logo || settings?.dark_logo) ? (
+            <>
+              {settings.logo && (
+                <img src={getImageUrl(settings.logo)!} alt={settings?.company_name || "Logo"} className={`h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105 ${settings.dark_logo ? 'dark:hidden block' : ''}`} />
+              )}
+              {settings.dark_logo && (
+                <img src={getImageUrl(settings.dark_logo)!} alt={settings?.company_name || "Logo"} className={`h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105 ${settings.logo ? 'hidden dark:block' : ''}`} />
+              )}
+            </>
           ) : (
             <span className="text-xl font-black tracking-widest text-black dark:text-white uppercase bg-gray-100 dark:bg-neutral-800 px-3.5 py-1.5 rounded-xl border border-gray-200/50 dark:border-neutral-700/50 transition-colors">
               {getCompanyInitials(settings?.company_name)}

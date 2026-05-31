@@ -12,6 +12,7 @@ export interface Setting {
   phone_number: string;
   address: string;
   logo?: string;
+  dark_logo?: string;
   favicon?: string;
   currency_symbol: string;
   show_blog: boolean;
@@ -63,6 +64,14 @@ export const useSettingStore = create<SettingState>((set, get) => ({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: toAbsolute(result.logo) }),
+        }).catch(() => {});
+      }
+
+      if (formData.has('dark_logo') && result.dark_logo) {
+        fetch('/api/update-dark-logo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: toAbsolute(result.dark_logo) }),
         }).catch(() => {});
       }
 

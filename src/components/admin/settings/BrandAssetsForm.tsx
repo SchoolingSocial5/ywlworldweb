@@ -56,22 +56,40 @@ export default function BrandAssetsForm({ initialData }: Props) {
       <div className="flex justify-between items-center border-b border-gray-100 dark:border-neutral-800 pb-4 px-[10px] md:px-8">
         <h3 className="font-black text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500">Brand Assets</h3>
       </div>
-      <div className="grid grid-cols-2 gap-6 px-[10px] md:px-8">
+      <div className="grid grid-cols-3 gap-6 px-[10px] md:px-8">
         <div>
-          <label className={labelClass}>Store Logo</label>
+          <label className={labelClass}>Light Mode Logo</label>
           <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white transition-colors w-24 h-24 bg-gray-50 dark:bg-neutral-800 flex items-center justify-center p-2">
             {(previews.logo || formData.logo) ? (
-              <img src={previews.logo || getImageUrl(formData.logo) || undefined} alt="Logo" className="max-w-full max-h-full object-contain" />
+              <img src={previews.logo || getImageUrl(formData.logo) || undefined} alt="Light Logo" className="max-w-full max-h-full object-contain" />
             ) : (
               <div className="text-center">
                 <svg className="mx-auto text-gray-300 dark:text-neutral-600 mb-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <p className="text-[8px] font-black uppercase text-gray-400 dark:text-gray-500">Logo</p>
+                <p className="text-[8px] font-black uppercase text-gray-400 dark:text-gray-500">Light</p>
               </div>
             )}
             <input type="file" onChange={e => {
               const file = e.target.files?.[0];
               if (file) handleFileChange('logo', file);
-            }} className="absolute inset-0 opacity-0 cursor-pointer" title="Change Logo" />
+            }} className="absolute inset-0 opacity-0 cursor-pointer" title="Change Light Logo" />
+          </div>
+        </div>
+
+        <div>
+          <label className={labelClass}>Dark Mode Logo</label>
+          <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white transition-colors w-24 h-24 bg-gray-50 dark:bg-neutral-800 flex items-center justify-center p-2">
+            {(previews.dark_logo || formData.dark_logo) ? (
+              <img src={previews.dark_logo || getImageUrl(formData.dark_logo) || undefined} alt="Dark Logo" className="max-w-full max-h-full object-contain" />
+            ) : (
+              <div className="text-center">
+                <svg className="mx-auto text-gray-300 dark:text-neutral-600 mb-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <p className="text-[8px] font-black uppercase text-gray-400 dark:text-gray-500">Dark</p>
+              </div>
+            )}
+            <input type="file" onChange={e => {
+              const file = e.target.files?.[0];
+              if (file) handleFileChange('dark_logo', file);
+            }} className="absolute inset-0 opacity-0 cursor-pointer" title="Change Dark Logo" />
           </div>
         </div>
 
