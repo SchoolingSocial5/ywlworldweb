@@ -26,6 +26,7 @@ import Footer from "@/components/Footer";
 import { SettingsProvider } from "@/context/SettingsContext";
 import DynamicBranding from "@/components/DynamicBranding";
 import CurrencyInitializer from "@/components/common/CurrencyInitializer";
+import GlobalLoader from "@/components/GlobalLoader";
 
 export default function RootLayout({
   children,
@@ -34,13 +35,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${outfit.variable} antialiased`}>
-      <body className="min-h-screen font-sans transition-colors duration-300 flex flex-col">
+      <body className="min-h-screen font-sans transition-colors duration-300 flex flex-col pb-16 md:pb-0">
         <SettingsProvider>
           <CurrencyInitializer />
           <DynamicBranding />
           <AuthProvider>
             <CartProvider>
               <ThemeProvider>
+                <GlobalLoader />
                 <div className="flex-1 flex flex-col">
                   {children}
                 </div>

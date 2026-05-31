@@ -48,10 +48,13 @@ export const useSocialMediaStore = create<SocialMediaState>((set, get) => ({
   fetchData: async () => {
     set({ loading: true, error: null });
     try {
-      const [platforms, activities] = await Promise.all([
-        apiClient<SocialMediaPlatform[]>('/admin/social-media/platforms'),
-        apiClient<SocialMediaActivity[]>('/admin/social-media/activities'),
-      ]);
+      const platforms = await apiClient<SocialMediaPlatform[]>('/admin/social-media');
+      let activities: SocialMediaActivity[] = [];
+      try {
+        activities = await apiClient<SocialMediaActivity[]>('/admin/social-media/activities');
+      } catch (e) {
+        console.warn('Activities endpoint not implemented yet');
+      }
       set({ platforms, activities, loading: false });
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -59,7 +62,7 @@ export const useSocialMediaStore = create<SocialMediaState>((set, get) => ({
   },
 
   createPlatform: async (formData) => {
-    const created = await apiClient<SocialMediaPlatform>('/admin/social-media/platforms', {
+    const created = await apiClient<SocialMediaPlatform>('/admin/social-media', {
       method: 'POST',
       body: formData,
       isFormData: true,
@@ -68,7 +71,7 @@ export const useSocialMediaStore = create<SocialMediaState>((set, get) => ({
   },
 
   updatePlatform: async (id, formData) => {
-    const updated = await apiClient<SocialMediaPlatform>(`/admin/social-media/platforms/${id}`, {
+    const updated = await apiClient<SocialMediaPlatform>(`/admin/social-media/${id}`, {
       method: 'POST',
       body: formData,
       isFormData: true,
@@ -77,7 +80,7 @@ export const useSocialMediaStore = create<SocialMediaState>((set, get) => ({
   },
 
   deletePlatform: async (id) => {
-    await apiClient(`/admin/social-media/platforms/${id}`, { method: 'DELETE' });
+    await apiClient(`/admin/social-media/${id}`, { method: 'DELETE' });
     set({ platforms: get().platforms.filter((p) => p.id !== id) });
   },
 

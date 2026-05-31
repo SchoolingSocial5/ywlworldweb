@@ -2,12 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useProductStore, Product } from "@/store/useProductStore";
 import { getImageUrl } from "@/utils/image";
 import ThemeToggle from "./ThemeToggle";
+import Toast from "@/components/admin/Toast";
 import { formatPrice } from "@/utils/format";
 import { useCurrencyStore, IP_COUNTRY_MAPPINGS } from "@/store/useCurrencyStore";
 
@@ -26,6 +28,23 @@ export default function Header() {
   const { user, logout } = useAuth();
   const { settings, loading: settingsLoading } = useSettings();
   const { products, fetchProducts } = useProductStore();
+  const pathname = usePathname();
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" | "info"; visible: boolean }>({ message: "", type: "success", visible: false });
+
+  const showToast = (message: string, type: "success" | "error" | "warning" | "info" = "success") => {
+    setToast({ message, type, visible: true });
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+  };
+
+  const handleCartClick = (e: React.MouseEvent) => {
+    if (totalItems === 0) {
+      e.preventDefault();
+      showToast("No product added", "warning");
+    } else {
+      setIsSearchOpen(false);
+      setIsMenuOpen(false);
+    }
+  };
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -198,7 +217,7 @@ export default function Header() {
           {/* Search icon button */}
           <button
             onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white cursor-pointer"
+            className="hidden md:flex p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white cursor-pointer items-center justify-center"
             aria-label="Search"
           >
             {isSearchOpen ? (
@@ -272,7 +291,9 @@ export default function Header() {
                 )}
               </div>
             )}
-            <ThemeToggle />
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
           </div>
 
           {/* Hamburger (mobile) */}
@@ -381,6 +402,10 @@ export default function Header() {
                 Sign In
               </Link>
             )}
+            <div className="flex items-center justify-between border-t border-gray-100 dark:border-neutral-800 pt-6 mt-2">
+              <span className="text-sm font-bold uppercase tracking-widest text-gray-500">Theme</span>
+              <ThemeToggle />
+            </div>
           </nav>
         </div>
       )}
@@ -390,7 +415,7 @@ export default function Header() {
     {totalItems > 0 && (
       <Link
         href="/checkout"
-        className="fixed bottom-6 right-6 z-[9999] w-14 h-14 bg-white dark:bg-neutral-900 border border-gray-150 dark:border-neutral-800 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group cursor-pointer"
+        className="hidden md:flex fixed bottom-6 right-6 z-[9999] w-14 h-14 bg-white dark:bg-neutral-900 border border-gray-150 dark:border-neutral-800 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group cursor-pointer"
         title="Go to Checkout"
       >
         <svg
@@ -411,6 +436,49 @@ export default function Header() {
         </span>
       </Link>
     )}
+
+    {/* Mobile Bottom Tab Bar */}
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border-t border-gray-100 dark:border-neutral-800 flex items-center justify-around h-16 pb-safe">
+      <Link href="/" onClick={() => { setIsSearchOpen(false); setIsMenuOpen(false); }} className="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-black dark:hover:text-white transition-colors">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span className="text-[10px] font-bold mt-1">Home</span>
+      </Link>
+      
+      <button onClick={() => { setIsSearchOpen(!isSearchOpen); setIsMenuOpen(false); }} className={`flex flex-col items-center justify-center w-full h-full transition-colors ${isSearchOpen ? 'text-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span className="text-[10px] font-bold mt-1">Search</span>
+      </button>
+
+      <button 
+        onClick={() => { 
+          if (pathname !== '/') return;
+          setIsSearchOpen(false); 
+          setIsMenuOpen(false); 
+          window.dispatchEvent(new CustomEvent('toggle-filter'));
+        }} 
+        className={`flex flex-col items-center justify-center w-full h-full transition-colors relative ${pathname !== '/' ? 'text-gray-300 dark:text-neutral-700 cursor-not-allowed' : 'text-gray-500 hover:text-black dark:hover:text-white cursor-pointer'}`}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <span className="text-[10px] font-bold mt-1">Filter</span>
+      </button>
+
+      <Link href="/cart" onClick={handleCartClick} className="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-black dark:hover:text-white transition-colors relative">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+        {totalItems > 0 && (
+          <span className="absolute top-2 right-4 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full border-2 border-white dark:border-neutral-900">
+            {totalItems}
+          </span>
+        )}
+        <span className="text-[10px] font-bold mt-1">Cart</span>
+      </Link>
+    </div>
+
+    <Toast
+      message={toast.message}
+      type={toast.type}
+      visible={toast.visible}
+      onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+    />
   </>
 );
 }

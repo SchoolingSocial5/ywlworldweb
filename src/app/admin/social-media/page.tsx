@@ -2,6 +2,9 @@
 import { useEffect, useState, useRef } from "react";
 import { useSocialMediaStore, SocialMediaPlatform, SocialMediaActivity } from "@/store/useSocialMediaStore";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import Toast from "@/components/admin/Toast";
+import PlatformModal from "./components/PlatformModal";
+import ActivityModal from "./components/ActivityModal";
 
 export default function SocialMediaPage() {
   const { platforms, activities, loading, fetchData, createPlatform, updatePlatform, deletePlatform, createActivity, deleteActivity } = useSocialMediaStore();
@@ -9,62 +12,43 @@ export default function SocialMediaPage() {
   
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [editingPlatformId, setEditingPlatformId] = useState<number | null>(null);
   
-  const [platformForm, setPlatformForm] = useState({ 
-    name: "", url: "", handle: "", icon: null as File | null
-  });
-  
-  const [activityForm, setActivityForm] = useState({ 
-    platform_id: "", name: "", activity_type: "Post", description: "", 
-    followers: 0, posts_count: 0, likes_count: 0, comments_count: 0, 
-    date: new Date().toISOString().split('T')[0], image: null as File | null 
-  });
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" | "info"; visible: boolean }>({ message: "", type: "success", visible: false });
 
-  const iconInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
+  const showToast = (message: string, type: "success" | "error" | "warning" | "info" = "success") => {
+    setToast({ message, type, visible: true });
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+  };
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const handlePlatformSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('name', platformForm.name);
-    if (platformForm.url) formData.append('url', platformForm.url);
-    if (platformForm.handle) formData.append('handle', platformForm.handle);
-    if (platformForm.icon) formData.append('icon', platformForm.icon);
-
+  const handlePlatformSubmit = async (id: number | null, formData: FormData) => {
     try {
-      await createPlatform(formData);
+      if (id) {
+        await updatePlatform(id, formData);
+        showToast("Channel updated successfully", "success");
+      } else {
+        await createPlatform(formData);
+        showToast("Channel added successfully", "success");
+      }
       setIsPlatformModalOpen(false);
-      setPlatformForm({ name: "", url: "", handle: "", icon: null });
-    } catch (err) {}
+      setEditingPlatformId(null);
+    } catch (err: any) {
+      showToast(err.message || "Failed to save channel", "error");
+    }
   };
 
-  const handleActivitySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('platform_id', activityForm.platform_id);
-    formData.append('name', activityForm.name);
-    formData.append('activity_type', activityForm.activity_type);
-    if (activityForm.description) formData.append('description', activityForm.description);
-    formData.append('followers', activityForm.followers.toString());
-    formData.append('posts_count', activityForm.posts_count.toString());
-    formData.append('likes_count', activityForm.likes_count.toString());
-    formData.append('comments_count', activityForm.comments_count.toString());
-    formData.append('date', activityForm.date);
-    if (activityForm.image) formData.append('image', activityForm.image);
-
+  const handleActivitySubmit = async (id: number | null, formData: FormData) => {
     try {
       await createActivity(formData);
+      showToast("Activity logged successfully", "success");
       setIsActivityModalOpen(false);
-      setActivityForm({ 
-        platform_id: "", name: "", activity_type: "Post", description: "", 
-        followers: 0, posts_count: 0, likes_count: 0, comments_count: 0, 
-        date: new Date().toISOString().split('T')[0], image: null 
-      });
-    } catch (err) {}
+    } catch (err: any) {
+      showToast(err.message || "Failed to save activity", "error");
+    }
   };
 
   const filteredActivities = activeTab === 'all' 
@@ -80,7 +64,10 @@ export default function SocialMediaPage() {
       >
         <div className="flex gap-3">
           <button 
-            onClick={() => setIsPlatformModalOpen(true)}
+            onClick={() => {
+              setEditingPlatformId(null);
+              setIsPlatformModalOpen(true);
+            }}
             className="group relative bg-white text-black border border-gray-200 px-4 py-2 md:px-6 md:py-3 rounded-2xl text-sm font-bold shadow-sm hover:shadow-md transition-all flex items-center gap-2 cursor-pointer overflow-hidden"
           >
             <span className="relative z-10">Add Account</span>
@@ -106,20 +93,32 @@ export default function SocialMediaPage() {
           </button>
           
           {platforms.map(platform => (
-            <button 
-              key={platform.id}
-              onClick={() => setActiveTab(platform.id)}
-              className={`px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all border flex items-center gap-3 ${activeTab === platform.id ? 'bg-white text-black border-black shadow-md' : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200'}`}
-            >
-              {platform.icon ? (
-                <img src={platform.icon} className="w-5 h-5 rounded-md object-cover" alt="" />
-              ) : (
-                <div className="w-5 h-5 bg-gray-100 rounded-md flex items-center justify-center text-[10px]">
-                  {platform.name.charAt(0)}
-                </div>
-              )}
-              {platform.name}
-            </button>
+            <div key={platform.id} className="relative group flex-shrink-0">
+              <button 
+                onClick={() => setActiveTab(platform.id)}
+                className={`px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all border flex items-center gap-3 pr-10 ${activeTab === platform.id ? 'bg-white text-black border-black shadow-md' : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200'}`}
+              >
+                {platform.icon ? (
+                  <img src={platform.icon} className="w-5 h-5 rounded-md object-cover" alt="" />
+                ) : (
+                  <div className="w-5 h-5 bg-gray-100 rounded-md flex items-center justify-center text-[10px]">
+                    {platform.name.charAt(0)}
+                  </div>
+                )}
+                {platform.name}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingPlatformId(platform.id);
+                  setIsPlatformModalOpen(true);
+                }}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity ${activeTab === platform.id ? 'text-black hover:bg-gray-100' : 'text-gray-400 hover:text-black hover:bg-gray-100'}`}
+                title="Edit Channel"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              </button>
+            </div>
           ))}
         </div>
         <div className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
@@ -225,167 +224,27 @@ export default function SocialMediaPage() {
         </div>
       </div>
 
-      {/* Add Platform Modal */}
-      {isPlatformModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neutral-900 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="px-10 py-8 border-b border-gray-50 dark:border-neutral-800 flex justify-between items-center bg-gray-50/50 dark:bg-neutral-800/50">
-              <div>
-                <h3 className="text-2xl font-black tracking-tight">Add Channel</h3>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">Connect a new social media profile</p>
-              </div>
-              <button onClick={() => setIsPlatformModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-gray-400 hover:text-black hover:border-black transition-all">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
-            <form onSubmit={handlePlatformSubmit} className="p-10">
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Brand Name</label>
-                    <input required type="text" value={platformForm.name} onChange={e => setPlatformForm({...platformForm, name: e.target.value})} placeholder="Instagram, Twitter, etc." className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Account URL</label>
-                    <input type="url" value={platformForm.url} onChange={e => setPlatformForm({...platformForm, url: e.target.value})} placeholder="https://..." className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Handle / Username</label>
-                    <input type="text" value={platformForm.handle} onChange={e => setPlatformForm({...platformForm, handle: e.target.value})} placeholder="@username" className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                  </div>
-                  
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Channel Icon</label>
-                    <div 
-                      onClick={() => iconInputRef.current?.click()}
-                      className="w-full h-14 bg-white border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center cursor-pointer hover:border-black hover:bg-gray-50 transition-all group overflow-hidden"
-                    >
-                      {platformForm.icon ? (
-                        <span className="text-xs font-bold text-black">{platformForm.icon.name}</span>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-300 group-hover:text-black"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                           <span className="text-[10px] font-black uppercase tracking-widest text-gray-300 group-hover:text-black">Upload Icon</span>
-                        </div>
-                      )}
-                      <input type="file" ref={iconInputRef} className="hidden" accept="image/*" onChange={e => setPlatformForm({...platformForm, icon: e.target.files?.[0] || null})} />
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <PlatformModal 
+        isOpen={isPlatformModalOpen}
+        onClose={() => setIsPlatformModalOpen(false)}
+        platform={platforms.find(p => p.id === editingPlatformId) || null}
+        onSubmit={handlePlatformSubmit}
+      />
 
-              <div className="flex gap-4 mt-12">
-                <button type="button" onClick={() => setIsPlatformModalOpen(false)} className="flex-1 px-8 py-5 border border-gray-100 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-400 hover:text-black hover:border-black transition-all">Discard</button>
-                <button type="submit" className="flex-1 px-8 py-5 bg-black text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-black/10 hover:bg-gray-800 transition-all">Save Channel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ActivityModal
+        isOpen={isActivityModalOpen}
+        onClose={() => setIsActivityModalOpen(false)}
+        platforms={platforms}
+        activity={null}
+        onSubmit={handleActivitySubmit}
+      />
 
-      {/* Activity Modal */}
-      {isActivityModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neutral-900 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="px-10 py-8 border-b border-gray-50 dark:border-neutral-800 flex justify-between items-center bg-gray-50/50 dark:bg-neutral-800/50">
-              <div>
-                <h3 className="text-2xl font-black tracking-tight">Post Analysis</h3>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">Record report & engagement stats</p>
-              </div>
-              <button onClick={() => setIsActivityModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-gray-400 hover:text-black hover:border-black transition-all">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
-            <form onSubmit={handleActivitySubmit} className="p-10 space-y-6">
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Channel</label>
-                    <select required value={activityForm.platform_id} onChange={e => setActivityForm({...activityForm, platform_id: e.target.value})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all appearance-none cursor-pointer dark:text-gray-100">
-                      <option value="">Select Platform</option>
-                      {platforms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Activity Name / Subject</label>
-                    <input required type="text" value={activityForm.name} onChange={e => setActivityForm({...activityForm, name: e.target.value})} placeholder="e.g. Summer Campaign Week 1" className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Type</label>
-                      <select value={activityForm.activity_type} onChange={e => setActivityForm({...activityForm, activity_type: e.target.value})} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all cursor-pointer">
-                        <option>Post</option>
-                        <option>Story</option>
-                        <option>Reel</option>
-                        <option>Live</option>
-                        <option>Ad</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Date</label>
-                      <input required type="date" value={activityForm.date} onChange={e => setActivityForm({...activityForm, date: e.target.value})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Post / Preview Image</label>
-                    <div 
-                      onClick={() => imageInputRef.current?.click()}
-                      className="w-full h-24 bg-white border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center cursor-pointer hover:border-black hover:bg-gray-50 transition-all group overflow-hidden"
-                    >
-                      {activityForm.image ? (
-                         <div className="relative w-full h-full">
-                            <img src={URL.createObjectURL(activityForm.image)} className="w-full h-full object-cover" alt="" />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                               <span className="text-white text-[10px] font-black uppercase tracking-widest">Change Image</span>
-                            </div>
-                         </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-1">
-                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-200 group-hover:text-black"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                           <span className="text-[10px] font-black uppercase tracking-widest text-gray-300 group-hover:text-black">Upload Visual</span>
-                        </div>
-                      )}
-                      <input type="file" ref={imageInputRef} className="hidden" accept="image/*" onChange={e => setActivityForm({...activityForm, image: e.target.files?.[0] || null})} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Followers</label>
-                      <input type="number" value={activityForm.followers} onChange={e => setActivityForm({...activityForm, followers: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Posts</label>
-                      <input type="number" value={activityForm.posts_count} onChange={e => setActivityForm({...activityForm, posts_count: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Likes</label>
-                      <input type="number" value={activityForm.likes_count} onChange={e => setActivityForm({...activityForm, likes_count: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Comments</label>
-                      <input type="number" value={activityForm.comments_count} onChange={e => setActivityForm({...activityForm, comments_count: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Notes / Description</label>
-                    <textarea rows={4} value={activityForm.description} onChange={e => setActivityForm({...activityForm, description: e.target.value})} placeholder="Key takeaways from this period..." className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all resize-none dark:text-gray-100" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-6">
-                <button type="button" onClick={() => setIsActivityModalOpen(false)} className="flex-1 px-8 py-5 border border-gray-100 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-400 hover:text-black hover:border-black transition-all">Cancel</button>
-                <button type="submit" className="flex-1 px-8 py-5 bg-black text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-black/10 hover:bg-gray-800 transition-all">Update Analytics</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+      />
     </div>
   );
 }

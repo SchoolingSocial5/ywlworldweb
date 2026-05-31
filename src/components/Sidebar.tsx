@@ -204,7 +204,7 @@ export default function Sidebar({
 
       {/* Mobile Slide-over */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[10000] lg:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
           <div className="absolute left-0 top-0 h-full w-72 bg-white dark:bg-neutral-900 shadow-2xl p-8 animate-in slide-in-from-left duration-300">
             <div className="flex items-center justify-between mb-8">

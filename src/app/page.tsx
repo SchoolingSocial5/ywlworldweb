@@ -48,6 +48,12 @@ export default function Home() {
         if (blog) setHomeBlog(blog);
       })
       .catch(() => { });
+
+    const handleToggleFilter = () => setIsSidebarOpen(prev => !prev);
+    window.addEventListener('toggle-filter', handleToggleFilter);
+    return () => {
+      window.removeEventListener('toggle-filter', handleToggleFilter);
+    };
   }, [fetchProducts, fetchBanners, fetchPublicBlogs]);
 
   // Filter by category, color, and price, then sort
