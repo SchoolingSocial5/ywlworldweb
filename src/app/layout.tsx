@@ -8,8 +8,15 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Hi Health Equipment",
-  description: "Explore the various collection of Hi Health Equipment",
+  title: "You're Wearing Legacy | Premium Online Clothing",
+  description: "Discover our exclusive collection of premium apparel. You're Wearing Legacy is your destination for modern, timeless fashion and legacy-defining online clothing.",
+  keywords: ["online clothing", "premium apparel", "fashion", "You're Wearing Legacy", "clothing brand", "legacy clothing"],
+  openGraph: {
+    title: "You're Wearing Legacy | Premium Online Clothing",
+    description: "Discover our exclusive collection of premium apparel.",
+    type: "website",
+    siteName: "You're Wearing Legacy",
+  }
 };
 
 import { CartProvider } from "@/context/CartContext";
