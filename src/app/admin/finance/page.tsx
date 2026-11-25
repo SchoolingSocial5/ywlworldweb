@@ -50,7 +50,7 @@ export default function FinancePage() {
         if (toDate) params.append('to', toDate);
       }
 
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/admin/finance?${params.toString()}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/admin/finance?${params.toString()}`;
       const res = await fetch(url, { headers });
       
       if (!res.ok) {

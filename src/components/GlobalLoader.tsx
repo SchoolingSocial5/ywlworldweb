@@ -8,6 +8,21 @@ export default function GlobalLoader() {
   const [show, setShow] = useState(true);
   const { settings, loading } = useSettings();
   const [fade, setFade] = useState(false);
+  const [lightLogoError, setLightLogoError] = useState(false);
+  const [darkLogoError, setDarkLogoError] = useState(false);
+
+  useEffect(() => {
+    setLightLogoError(false);
+  }, [settings?.logo]);
+
+  useEffect(() => {
+    setDarkLogoError(false);
+  }, [settings?.dark_logo]);
+
+  const rawLight = settings?.logo ? getImageUrl(settings.logo) : null;
+  const rawDark = settings?.dark_logo ? getImageUrl(settings.dark_logo) : null;
+  const validLight = !lightLogoError && rawLight ? rawLight : null;
+  const validDark = !darkLogoError && rawDark ? rawDark : null;
 
   useEffect(() => {
     // Only run this logic once when the component mounts (on full app refresh)
@@ -32,23 +47,25 @@ export default function GlobalLoader() {
       }`}
     >
       <div className="animate-pulse flex items-center justify-center">
-        {!loading && (settings?.logo || settings?.dark_logo) ? (
+        {!loading && (validLight || validDark) ? (
           <>
-            {settings.logo && (
+            {validLight && (
               <img
-                src={getImageUrl(settings.logo)!}
+                src={validLight}
                 alt={settings?.company_name || "Logo"}
+                onError={() => setLightLogoError(true)}
                 className={`h-20 md:h-28 w-auto object-contain ${
-                  settings.dark_logo ? "dark:hidden block" : ""
+                  validDark ? "dark:hidden block" : "block"
                 }`}
               />
             )}
-            {settings.dark_logo && (
+            {validDark && (
               <img
-                src={getImageUrl(settings.dark_logo)!}
+                src={validDark}
                 alt={settings?.company_name || "Logo"}
+                onError={() => setDarkLogoError(true)}
                 className={`h-20 md:h-28 w-auto object-contain ${
-                  settings.logo ? "hidden dark:block" : ""
+                  validLight ? "hidden dark:block" : "block"
                 }`}
               />
             )}

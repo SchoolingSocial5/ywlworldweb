@@ -56,8 +56,8 @@ export const useSettingStore = create<SettingState>((set, get) => ({
       set({ settings: result, loading: false });
 
       // Trigger local asset updates if applicable
-      const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
-      const toAbsolute = (p: string) => p.startsWith('http') ? p : `${apiBase}${p}`;
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '').replace(/\/+$/, '');
+      const toAbsolute = (p: string) => p.startsWith('http') ? p : `${apiBase}${p.startsWith('/') ? '' : '/'}${p}`;
 
       if (formData.has('logo') && result.logo) {
         fetch('/api/update-logo', {

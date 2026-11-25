@@ -12,7 +12,7 @@ export async function generateMetadata(
   const id = params.id;
   
   // Fetch data
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
   let product: Product | null = null;
   
   try {

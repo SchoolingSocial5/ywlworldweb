@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useSettings } from '@/context/SettingsContext';
@@ -32,7 +32,16 @@ export default function Footer() {
     return null;
   }
   const companyName = settings?.company_name || 'Wink Ecommerce';
-  const logoSrc = getImageUrl(settings?.logo);
+
+  const [logoError, setLogoError] = useState(false);
+  useEffect(() => {
+    setLogoError(false);
+  }, [settings?.logo, settings?.dark_logo]);
+
+  const rawLight = settings?.logo ? getImageUrl(settings.logo) : null;
+  const rawDark = settings?.dark_logo ? getImageUrl(settings.dark_logo) : null;
+  const logoSrc = (!logoError && (rawLight || rawDark)) || null;
+  const hasDedicatedDark = Boolean(!logoError && rawDark);
 
   // Helper to render social icons
   const renderIcon = (platformName: string) => {
@@ -54,7 +63,12 @@ export default function Footer() {
               {settingsLoading ? (
                 <div className="h-8 w-24 bg-gray-100 dark:bg-neutral-800 animate-pulse rounded-lg" />
               ) : logoSrc ? (
-                <img src={logoSrc} alt={companyName} className="h-10 max-w-[140px] w-auto object-contain dark:invert transition-transform group-hover:scale-105" />
+                <img
+                  src={logoSrc}
+                  alt={companyName}
+                  onError={() => setLogoError(true)}
+                  className={`h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105 ${hasDedicatedDark ? '' : 'dark:invert'}`}
+                />
               ) : (
                 <span className="text-xl font-black tracking-widest text-black dark:text-white uppercase bg-gray-100 dark:bg-neutral-850 px-3.5 py-1.5 rounded-xl border border-gray-200/50 dark:border-neutral-800/50 transition-colors">
                   {getCompanyInitials(companyName)}

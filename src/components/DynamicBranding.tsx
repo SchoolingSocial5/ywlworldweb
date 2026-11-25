@@ -10,8 +10,9 @@ export default function DynamicBranding() {
     if (!settings) return;
 
     // 1. Dynamic Favicon
-    if (settings.favicon) {
-      const faviconUrl = getImageUrl(settings.favicon);
+    const rawFavicon = settings.favicon || settings.logo;
+    if (rawFavicon) {
+      const faviconUrl = getImageUrl(rawFavicon);
       if (faviconUrl) {
         // Update standard favicon
         let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");

@@ -19,7 +19,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (data: any) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/login`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (data: any) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/register`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -55,7 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   forgotPassword: async (email: string) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/forgot-password`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   verifyCode: async (email: string, code: string) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/verify-code`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/verify-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -89,7 +89,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   resetPassword: async (data: any) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/reset-password`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -106,7 +106,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   changePassword: async (data: any) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/users/profile/password`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/users/profile/password`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',

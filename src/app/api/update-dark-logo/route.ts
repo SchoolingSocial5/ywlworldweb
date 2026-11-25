@@ -11,7 +11,11 @@ export async function POST(request: NextRequest) {
     if (!res.ok) return NextResponse.json({ error: 'Failed to fetch logo from URL' }, { status: 400 });
 
     const buffer = Buffer.from(await res.arrayBuffer());
-    const logoPath = path.join(process.cwd(), 'public', 'store-logo-dark.png');
+    const publicDir = path.join(process.cwd(), 'public');
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+    const logoPath = path.join(publicDir, 'store-logo-dark.png');
     fs.writeFileSync(logoPath, buffer);
 
     return NextResponse.json({ success: true });

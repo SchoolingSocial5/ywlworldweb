@@ -28,7 +28,15 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     pathname.startsWith('/admin/staff')
   );
   const [activePath, setActivePath] = useState(pathname);
-  const logoSrc = getImageUrl(settings?.logo);
+  const [logoError, setLogoError] = useState(false);
+
+  useEffect(() => {
+    setLogoError(false);
+  }, [settings?.logo, settings?.dark_logo]);
+
+  const rawLogo = settings?.logo ? getImageUrl(settings.logo) : null;
+  const rawDarkLogo = settings?.dark_logo ? getImageUrl(settings.dark_logo) : null;
+  const logoSrc = (!logoError && (rawLogo || rawDarkLogo)) || null;
   const { unpaidCount } = useOrderStore();
 
   const isSuper =
@@ -71,7 +79,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           {settingsLoading ? (
             <div className="h-8 w-24 bg-gray-100 dark:bg-neutral-800 animate-pulse rounded-lg" />
           ) : logoSrc ? (
-            <img src={logoSrc} alt={settings?.company_name || "Logo"} className="h-10 max-w-[130px] w-auto object-contain" />
+            <img
+              src={logoSrc}
+              alt={settings?.company_name || "Logo"}
+              onError={() => setLogoError(true)}
+              className="h-10 max-w-[130px] w-auto object-contain"
+            />
           ) : (
             <span className="text-lg font-black uppercase tracking-tight">{settings?.company_name || "Store"}</span>
           )}

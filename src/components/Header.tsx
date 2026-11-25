@@ -51,7 +51,21 @@ export default function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
-  const logoSrc = getImageUrl(settings?.logo);
+  const [lightLogoError, setLightLogoError] = useState(false);
+  const [darkLogoError, setDarkLogoError] = useState(false);
+
+  useEffect(() => {
+    setLightLogoError(false);
+  }, [settings?.logo]);
+
+  useEffect(() => {
+    setDarkLogoError(false);
+  }, [settings?.dark_logo]);
+
+  const rawLight = settings?.logo ? getImageUrl(settings.logo) : null;
+  const rawDark = settings?.dark_logo ? getImageUrl(settings.dark_logo) : null;
+  const validLight = !lightLogoError && rawLight ? rawLight : null;
+  const validDark = !darkLogoError && rawDark ? rawDark : null;
 
   const { 
     activeCurrency, activeSymbol, activeFlag, 
@@ -112,16 +126,26 @@ export default function Header() {
       <div className="max-w-[1400px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
 
         {/* Logo - Left */}
-        <Link href="/" className="flex-shrink-0 group">
+        <Link href="/" className="flex-shrink-0 group flex items-center">
           {settingsLoading ? (
             <div className="h-8 w-24 bg-gray-100 dark:bg-neutral-800 animate-pulse rounded-lg" />
-          ) : (settings?.logo || settings?.dark_logo) ? (
+          ) : (validLight || validDark) ? (
             <>
-              {settings.logo && (
-                <img src={getImageUrl(settings.logo)!} alt={settings?.company_name || "Logo"} className={`h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105 ${settings.dark_logo ? 'dark:hidden block' : ''}`} />
+              {validLight && (
+                <img
+                  src={validLight}
+                  alt={settings?.company_name || "Logo"}
+                  onError={() => setLightLogoError(true)}
+                  className={`h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105 ${validDark ? 'dark:hidden block' : 'block'}`}
+                />
               )}
-              {settings.dark_logo && (
-                <img src={getImageUrl(settings.dark_logo)!} alt={settings?.company_name || "Logo"} className={`h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105 ${settings.logo ? 'hidden dark:block' : ''}`} />
+              {validDark && (
+                <img
+                  src={validDark}
+                  alt={settings?.company_name || "Logo"}
+                  onError={() => setDarkLogoError(true)}
+                  className={`h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105 ${validLight ? 'hidden dark:block' : 'block'}`}
+                />
               )}
             </>
           ) : (
